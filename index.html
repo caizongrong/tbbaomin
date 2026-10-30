@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>请用浏览器打开</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;color:#17202c;background:#fff}*{box-sizing:border-box}body{margin:0}.page{max-width:520px;min-height:100svh;margin:auto;padding:calc(35px + env(safe-area-inset-top)) 23px 36px;text-align:center;position:relative}.arrow{position:absolute;right:27px;top:calc(8px + env(safe-area-inset-top));font-size:67px;color:#1677ed;line-height:1;transform:rotate(-13deg)}h1{margin:68px 0 16px;font-size:31px;letter-spacing:.02em}.sub{font-size:18px;line-height:1.9;margin:0 auto 24px;color:#333e4e}.accent{font-weight:750;color:#1677ed}.panel{background:#f3f5f8;border-radius:18px;padding:19px 12px 23px;margin:0 auto 24px}.panel-head{font-size:13px;color:#667184;margin-bottom:16px}.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.tile{background:#fff;border-radius:12px;min-height:80px;padding:12px 2px 8px;font-size:12px;color:#596474}.tile .symbol{display:block;font-size:25px;margin-bottom:8px}.tile.active{outline:2px solid #1878ed;color:#176ad6;font-weight:700}.btn{border:0;border-radius:13px;background:#1677ed;color:white;font-size:17px;font-weight:700;padding:15px 20px;width:100%;cursor:pointer}.minor{font-size:13px;color:#687385;line-height:1.8;margin:17px 0 0}.error{color:#bc3030;font-size:15px;line-height:1.7}.hidden{display:none}@media(max-width:370px){h1{font-size:27px}.sub{font-size:16px}.arrow{font-size:55px}.tile{font-size:11px}}
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="arrow" aria-hidden="true">↗</div>
+  <h1>请用浏览器打开</h1>
+  <p class="sub" id="instruction">请点击右上角 <span class="accent">···</span><br>选择 <span class="accent">“在浏览器打开”</span></p>
+  <section class="panel" aria-label="浏览器打开操作示意">
+    <div class="panel-head">操作示意（菜单因版本而异）</div>
+    <div class="tiles">
+      <div class="tile"><span class="symbol">☆</span>收藏</div>
+      <div class="tile"><span class="symbol">🔗</span>复制链接</div>
+      <div class="tile"><span class="symbol">↗</span>分享</div>
+      <div class="tile active"><span class="symbol">🌐</span>浏览器打开</div>
+    </div>
+  </section>
+  <p class="error hidden" id="error" role="alert"></p>
+  <button class="btn" type="button" id="copy">复制链接</button>
+  <p class="minor" id="hint">如果没有“在浏览器打开”，请复制链接并粘贴到手机浏览器。</p>
+</main>
+<script>
+(()=>{
+  'use strict';
+  const ALLOWED_HOSTS=new Set(['ccbmm.cc']);
+  const DEFAULT_URL='https://ccbmm.cc/';
+  const params=new URLSearchParams(location.search);
+  const input=params.get('url')||DEFAULT_URL;
+  let destination;
+  try{
+    destination=new URL(input);
+    if(destination.protocol!=='https:' || !ALLOWED_HOSTS.has(destination.hostname.toLowerCase()) || destination.username || destination.password || (destination.port && destination.port!=='443')) throw new Error('bad target');
+  }catch(e){
+    document.getElementById('error').textContent='链接无效，请联系分享者获取正确链接。';
+    document.getElementById('error').classList.remove('hidden');
+    document.getElementById('copy').disabled=true;
+    return;
+  }
+  const ua=navigator.userAgent;
+  const inWechat=/MicroMessenger/i.test(ua);
+  const inQQ=/QQ\//i.test(ua) || (/\bQQ\b/i.test(ua) && /Android/i.test(ua));
+  const isiOS=/iPhone|iPad|iPod/i.test(ua);
+  if(!(inWechat||inQQ)){
+    location.replace(destination.href);
+    return;
+  }
+  if(isiOS){
+    document.getElementById('instruction').innerHTML='请点击右上角 <span class="accent">···</span><br>选择 <span class="accent">“在Safari中打开”</span>或“在浏览器打开”';
+    document.getElementById('hint').textContent='如果没有对应选项，请复制链接并粘贴到Safari地址栏。';
+  }
+  // Copy the entry URL, not the final site: opening it in a regular browser redirects to the allowed destination.
+  const shareUrl=new URL(location.href);
+  shareUrl.search='';
+  shareUrl.hash='';
+  shareUrl.searchParams.set('url',destination.href);
+  const copy=document.getElementById('copy');
+  copy.addEventListener('click',async()=>{
+    try{
+      if(!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('clipboard unavailable');
+      await navigator.clipboard.writeText(shareUrl.href);
+      copy.textContent='已复制，请粘贴到浏览器';
+    }catch(e){
+      window.prompt('请长按复制以下链接，然后粘贴到浏览器地址栏：',shareUrl.href);
+    }
+  });
+})();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"f05c6ba029764a72bbf8a7ac686120ea","r":1,"spa":2}' crossorigin="anonymous"></script>
